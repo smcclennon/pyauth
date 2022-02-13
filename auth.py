@@ -79,7 +79,8 @@ class Db_interface():
                 # Print success message
                 debug('Loaded database!', 0)
                 # Database loaded successfully, stop looping
-                return user_db
+                Db_interface.users = user_db
+                break
 
             # If JSON is erroneous, backup file and delete original
             except json.decoder.JSONDecodeError as e:
@@ -210,5 +211,5 @@ class Display:
             print("\n== Welcome ==")
             Display.login()
 
-Db_interface.users = Db_interface.load_db()
+Db_interface.load_db()
 Display.main_menu()
