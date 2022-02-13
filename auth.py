@@ -150,6 +150,10 @@ class Auth():
 
     def register(username, password):
         debug(f'Registering {username}')
+        
+        # Prevent new dictionary keys being stored as integers
+        username = str(username)
+
         if username in Db_interface.users:
             debug('Registration failure, username_taken', 1)
             return "username_taken"
