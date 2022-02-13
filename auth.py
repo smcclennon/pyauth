@@ -120,8 +120,7 @@ class Db_interface():
         for item in [salt, key]:
             encoded_item = Codec.b64_encode(item)
             creds.append(encoded_item)
-        Db_interface.users[username]["salt"] = creds[0]
-        Db_interface.users[username]["key"] = creds[1]
+        Db_interface.users[username].update({"salt": creds[0], "key": creds[1]})
         debug('Put credentials!', 0)
         Db_interface.save_db()
 
@@ -159,11 +158,7 @@ class Auth():
             salt, key = Codec.hash(password)
 
             # Initialise user entry
-            Db_interface.users[username] = {
-                "salt": "",
-                "key": "",
-                "example_data": 0
-            }
+            Db_interface.users.update({username: {"example_data": 0}})
             # Store non-plaintext password
             Db_interface.putcreds(username, salt, key)
             debug('Registration success!', 0)
