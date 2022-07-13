@@ -24,7 +24,7 @@ def debug(message, status='debug'):
 class Codec():
 
     # https://nitratine.net/blog/post/how-to-hash-passwords-in-python/
-    def hash(password, **kwargs):
+    def hash(self, **kwargs):
         debug('Hashing password')
         # Generate secure random salt
         new_salt = os.urandom(32)
@@ -32,27 +32,20 @@ class Codec():
         salt = kwargs.get("salt", new_salt)
 
         # Generate key
-        key = hashlib.pbkdf2_hmac(
-            "sha256", # The hash digest algorithm for HMAC
-            password.encode("utf-8"), # Convert the password to bytes
-            salt, # Provide the salt
-            100000 # It is recommended to use at least 100,000 iterations of SHA-256 
-        )
+        key = hashlib.pbkdf2_hmac("sha256", self.encode("utf-8"), salt, 100000)
         return salt, key
 
-    def b64_encode(original_bytes):
+    def b64_encode(self):
         debug('Encoding bytes to base64')
         # Input: b'T\x8b[m\xa7>'
-        base64_bytes = base64.b64encode(original_bytes)  # Encode with base64: b'VItbbac+'
-        base64_string = base64_bytes.decode('utf-8')  # Bytes to string: 'VItbbac+'
-        return base64_string
+        base64_bytes = base64.b64encode(self)
+        return base64_bytes.decode('utf-8')
 
-    def b64_decode(base64_string):
+    def b64_decode(self):
         debug('Decoding base64 to bytes')
         # Input: 'VItbbac+'
-        base64_bytes = base64_string.encode('utf-8')  # b'VItbbac+'
-        original_bytes = base64.b64decode(base64_bytes)  # Decode from base64: b'T\x8b[m\xa7>'
-        return original_bytes
+        base64_bytes = self.encode('utf-8')
+        return base64.b64decode(base64_bytes)
 
 
 # Interface with database file
@@ -104,23 +97,23 @@ class Db_interface():
                 # Print debug message and re-loop (to load database in to variable)
                 debug('Created new database', 0)
 
-    def getcreds(username):
-        debug(f'Getting credentials for "{username}"')
+    def getcreds(self):
+        debug(f'Getting credentials for "{self}"')
         creds = []
         for item in ["salt", "key"]:
-            encoded_item = Db_interface.users[username][item]
+            encoded_item = Db_interface.users[self][item]
             decoded_item = Codec.b64_decode(encoded_item)
             creds.append(decoded_item)
         debug('Credentials retrieved!', 0)
         return creds[0], creds[1]  # return salt, key
 
-    def putcreds(username, salt, key):
-        debug(f'Putting credentials for "{username}"')
+    def putcreds(self, salt, key):
+        debug(f'Putting credentials for "{self}"')
         creds = []
         for item in [salt, key]:
             encoded_item = Codec.b64_encode(item)
             creds.append(encoded_item)
-        Db_interface.users[username].update({"salt": creds[0], "key": creds[1]})
+        Db_interface.users[self].update({"salt": creds[0], "key": creds[1]})
         debug('Put credentials!', 0)
         Db_interface.save_db()
 
@@ -128,11 +121,11 @@ class Db_interface():
 # Authentication code
 class Auth():
 
-    def authenticate(username, password):
-        debug(f'Authenticating "{username}"')
-        if username in Db_interface.users:
+    def authenticate(self, password):
+        debug(f'Authenticating "{self}"')
+        if self in Db_interface.users:
             # Get correct keys from database, converting string back to bytes
-            original_salt, original_key = Db_interface.getcreds(username)
+            original_salt, original_key = Db_interface.getcreds(self)
 
             # Generate new keys using provided credentials
             original_salt, new_key = Codec.hash(password, salt=original_salt)
@@ -148,13 +141,13 @@ class Auth():
             debug('Authentication failure, invalid_user', 1)
             return "invalid_user"
 
-    def register(username, password):
-        debug(f'Registering {username}')
-        
-        # Prevent new dictionary keys being stored as integers
-        username = str(username)
+    def register(self, password):
+        debug(f'Registering {self}')
 
-        if username in Db_interface.users:
+        # Prevent new dictionary keys being stored as integers
+        self = str(self)
+
+        if self in Db_interface.users:
             debug('Registration failure, username_taken', 1)
             return "username_taken"
         else:
@@ -162,9 +155,9 @@ class Auth():
             salt, key = Codec.hash(password)
 
             # Initialise user entry
-            Db_interface.users.update({username: {"example_data": 0}})
+            Db_interface.users.update({self: {"example_data": 0}})
             # Store non-plaintext password
-            Db_interface.putcreds(username, salt, key)
+            Db_interface.putcreds(self, salt, key)
             debug('Registration success!', 0)
             return "success"
 
@@ -172,9 +165,9 @@ class Auth():
 # Frontend code
 class Display:
     
-    def secure(username):
+    def secure(self):
         print('\n* Top secret information')
-        print(f'Welcome, {username}')
+        print(f'Welcome, {self}')
         input('[press enter to go back]')
 
     def login():
